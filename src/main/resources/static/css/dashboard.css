@@ -1,0 +1,17 @@
+body {
+  font-size: .875rem;
+}
+
+footer {
+  padding-top: 200px;
+  text-align: center;
+}
+
+[role="main"] {
+  padding-top: 48px; /* Space for fixed navbar */
+}
+
+.amchart-container {
+  width: 100%;
+  height: 500px;
+}

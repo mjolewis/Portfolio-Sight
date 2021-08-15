@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <link rel="icon" href="/images/logo.jpg" />
+    <link href="/css/login-and-register.css" rel="stylesheet">
+
+    <title>Login</title>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D66STNNHEG"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-D66STNNHEG');
+    </script>
+</head>
+
+<body class="text-center">
+    <form class="form-signin" action="#" th:action="@{/login}" method="POST">
+        <div id="errorMsg" th:if="${param.error}" class="alert alert-danger">
+            Invalid username or password
+        </div>
+        <div id="logoutMsg" th:if="${param.logout}" class="alert alert-dark">
+            You have been logged out
+        </div>
+        <img class="mb-4" src="/images/logo.jpg" alt="" width="72" height="72">
+        <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+
+        <label for="inputUsername" class="sr-only">Username</label>
+        <input type="text" id="inputUsername" class="form-control" name="username" placeholder="Username" maxlength="50" required autofocus>
+
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" id="inputPassword" class="form-control" name="password" placeholder="Password" maxlength="50" required>
+
+        <button class="btn btn-lg btn-primary btn-block" type="submit" id="submitButton" >Sign in</button>
+
+        <div class="form-group" style="margin-top: 0.5em;">
+            <label><a th:href="@{/signup}">Click here to sign up</a></label>
+        </div>
+    </form>
+</body>
+
+</html>

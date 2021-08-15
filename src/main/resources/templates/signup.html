@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <link rel="icon" href="/images/logo.jpg" />
+    <link href="/css/login-and-register.css" rel="stylesheet">
+
+    <title>Sign Up</title>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D66STNNHEG"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-D66STNNHEG');
+    </script>
+</head>
+
+<body class="text-center">
+
+    <form class="form-signin" action="#" th:action="@{/signup}" method="POST">
+        <div id="success-msg" th:if="${signupSuccess}" class="alert alert-dark">
+            You successfully signed up! Please continue to the <a id="login-link" th:href="@{/login}">login</a> page.
+        </div>
+        <div id="error-msg" th:if="${signupError}" class="alert alert-danger">
+            <span th:text="${signupError}"></span>
+        </div>
+
+        <img class="mb-4" src="/images/logo.jpg" alt="" width="72" height="72">
+        <h1 class="h3 mb-3 font-weight-normal">Register below</h1>
+        <label for="inputEmail" class="sr-only">Email</label>
+        <input type="email" name="email" class="form-control" id="inputEmail" placeholder="Enter Email" maxlength="50"
+            required>
+
+        <label for="inputUsername" class="sr-only">Username</label>
+        <input type="text" name="username" class="form-control" id="inputUsername" placeholder="Enter Username"
+            maxlength="50" required>
+
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" name="password" class="form-control" id="inputPassword" placeholder="Enter Password"
+            minlength="10" maxlength="50" required>
+
+        <button class="btn btn-lg btn-primary btn-block" type="submit" id="submitButton">Sign up</button>
+
+        <div class="form-group" style="margin-top: 0.5em;">
+            <label><a th:href="@{/login}">Back to Login</a></label>
+        </div>
+
+    </form>
+</body>
+
+</html>

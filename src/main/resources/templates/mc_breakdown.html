@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Stock Portfolio Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--<link rel="icon" href="../icons/favicon.ico" />-->
+    <link rel="icon" href="/images/logo.jpg" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link href="/css/dashboard.css" rel="stylesheet">
+    <link href="/css/navbar.css" rel="stylesheet">
+    <link href="/css/sidebar.css" rel="stylesheet">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D66STNNHEG"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-D66STNNHEG');
+    </script>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0">
+        <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Stock Portfolio Dashboard</a>
+        <ul class="navbar-nav px-3">
+            <li class="nav-item text-nowrap">
+                <!--Authenticated user and log out-->
+                <div class="header-div">
+                    <div class="greeting-div">
+                        <span class="nav-link">Hello, </span>
+                        <span class="nav-link" style="text-transform: capitalize" sec:authentication="name">
+                            Guest</span>
+                    </div>
+
+                    <form th:action="@{/logout}" method="post">
+                        <input type="submit" class="btn btn-default btn-sm" value="Log out" />
+                    </form>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column dashboard-list">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/home}">
+                                Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/stock_breakdown}">
+                                Stock Breakdown
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/sector_breakdown}">
+                                Sector Breakdown
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active">
+                                Market Cap Breakdown
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link" th:href="@{/profile}">
+                                Profile
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Market Cap Breakdown</h1>
+                </div>
+
+                <div id="amchart-container" class="amchart-container">
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <footer>
+        <p>Created by Team SPD in MET CS 673 Summer 2021</p>
+    </footer>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <script src="//cdn.amcharts.com/lib/4/core.js"></script>
+    <script src="//cdn.amcharts.com/lib/4/charts.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+
+    <!--------------------------------------------------------------------------------------
+    The below two scripts are necessary for getting Model data but still leveraging external
+    scripts. Thymeleaf tags do not work in external javascript files so this is the necessary
+    workaround.
+    --------------------------------------------------------------------------------------->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var myMicroCapData = [[${ MICROCAP }]];
+        var mySmallCapData = [[${ SMALLCAP }]];
+        var myMidCapData = [[${ MIDCAP }]];
+        var myLargeCapData = [[${ LARGECAP }]];
+        var myMegaCapData = [[${ MEGACAP }]];
+        /*]]>*/
+    </script>
+    <script src="/js/marketcap-visualizer.js"></script>
+</body>
+
+
+</html>
