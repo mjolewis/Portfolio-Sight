@@ -24,10 +24,10 @@ public class MarketDataScheduler {
 
     /**
      * Configures the schedule for getting updated market quotes from IEX Cloud. The task uses cron scheduling to run
-     * every minute from 4:00 AM to 5:00 PM Easter time every day-of-week from Monday through Friday. This schedule
+     * every minute from 4:00 AM to 5:00 PM Eastern time every day-of-week from Monday through Friday. This schedule
      * captures pre-market trading hours through the end of the normal trading day.
      */
-    @Scheduled(cron = "0 1 4-16 * * MON-FRI", zone = "GMT -5")
+    @Scheduled(cron = "0 */1 4-16 * * MON-FRI", zone = "EST")
     public void startSchedule() {
         LOGGER.info().log("OPENING BELL: 9:30 AM eastern time. Start fetching real-time price updates");
 
