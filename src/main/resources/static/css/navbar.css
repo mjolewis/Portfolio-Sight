@@ -23,14 +23,14 @@
     box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
   }
 
-  .header-div, .greeting-div{
+  .header-div, .greeting-div {
     display: flex;
   }
 
-  .greeting-div span{
+  .greeting-div span {
     white-space: nowrap;
   }
 
-  .greeting-div{
+  .greeting-div {
     padding-right: 20px;
   }
