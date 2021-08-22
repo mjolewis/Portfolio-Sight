@@ -10,11 +10,15 @@ import edu.bu.cs673.stockportfolio.service.utilities.ValidationService;
 import org.apache.tomcat.util.http.fileupload.InvalidFileNameException;
 import org.fissore.slf4j.FluentLogger;
 import org.fissore.slf4j.FluentLoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.OutputStream;
 
 /**********************************************************************************************************************
  * The FileUploadController handles client requests to insert and delete files.
@@ -37,6 +41,27 @@ public class PortfolioController {
         this.portfolioService = portfolioService;
         this.validationService = validationService;
         this.responseService = responseService;
+    }
+
+    @GetMapping("/export-template")
+    public void exportCsvTemplate(HttpServletResponse response) throws Exception {
+
+        // Set the name and content type of the template
+        String filename = "PortfolioSight-Template.csv";
+        response.setContentType("text/csv");
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + filename + "\"");
+
+        try {
+            LOGGER.info().log("Start export for CSV template");
+            OutputStream outputStream = response.getOutputStream();
+            String outputResult = "Account,Symbol,Quantity\n1234-5678,GS,100\n8765-4321,JPM,200";
+            outputStream.write(outputResult.getBytes());
+            outputStream.flush();
+            outputStream.close();
+        } catch(Exception e) {
+            LOGGER.error().log("Error exporting CSV template");
+        }
     }
 
     @PostMapping
