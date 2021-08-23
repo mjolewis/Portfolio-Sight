@@ -122,7 +122,15 @@ public class ResponseService {
     }
 
     private String doGetConsensusScore(Quote quote) {
-        return quote.getAnalystRecommendation().getMarketConsensus().toString();
+        Float score = quote.getAnalystRecommendation().getMarketConsensus();
+
+        for (RatingType ratingType : RatingType.values()) {
+            if (score >= ratingType.getMinimum() && score <= ratingType.getMaximum()) {
+                return ratingType.name();
+            }
+        }
+
+        return "--";
     }
 
     private String uploadSuccess(boolean result, Model model) {
@@ -137,6 +145,21 @@ public class ResponseService {
         return uploadSuccess(result, model);
     }
 
+    public String uploadError(boolean result, Model model) {
+        model.addAttribute("uploadFailed", result);
+        model.addAttribute("applicationEdgeCaseErrorMessage", result);
+        model.addAttribute("nav", "/home");
+
+        return "result";
+    }
+
+    public String deletePortfolioError(boolean result, Model model) {
+        model.addAttribute("deletePortfolioError", result);
+        model.addAttribute("nav", "/home");
+
+        return "result";
+    }
+
     public Map<String, Float> aggregateSumBySymbol(List<Account> accounts) {
         Map<String, Float> data = new LinkedHashMap<String, Float>();
 
@@ -147,29 +170,6 @@ public class ResponseService {
             for (AccountLine accountLine : accountLines) {
                 symbol = accountLine.getQuote().getSymbol();
                 calculateTotalValues(data, symbol, accountLine);
-            }
-        }
-
-        return data;
-    }
-
-    /**
-     * Calculates the total value of all quotes of all companies in a given sector
-     * 
-     * @param accounts  A list of all accounts to aggregate over
-     * @return  The proportion of each sector of the entire portfolio. The
-     * data will be presented to the user on the sector_breakdown endpoint
-     */
-    public Map<String, Float> aggregateSumBySector(List<Account> accounts) {
-        Map<String, Float> data = new LinkedHashMap<String, Float>();
-
-        String sector;
-        for (Account account : accounts) {
-
-            List<AccountLine> accountLines = account.getAccountLines();
-            for (AccountLine accountLine : accountLines) {
-                sector = accountLine.getQuote().getCompany().getSector();
-                calculateTotalValues(data, sector, accountLine);
             }
         }
 
@@ -207,6 +207,29 @@ public class ResponseService {
         return data;
     }
 
+    /**
+     * Calculates the total value of all quotes of all companies in a given sector
+     *
+     * @param accounts  A list of all accounts to aggregate over
+     * @return  The proportion of each sector of the entire portfolio. The
+     * data will be presented to the user on the sector_breakdown endpoint
+     */
+    public Map<String, Float> aggregateSumBySector(List<Account> accounts) {
+        Map<String, Float> data = new LinkedHashMap<String, Float>();
+
+        String sector;
+        for (Account account : accounts) {
+
+            List<AccountLine> accountLines = account.getAccountLines();
+            for (AccountLine accountLine : accountLines) {
+                sector = accountLine.getQuote().getCompany().getSector();
+                calculateTotalValues(data, sector, accountLine);
+            }
+        }
+
+        return data;
+    }
+
     private void calculateTotalValues(Map<String, Float> data, String aggregateTarget, AccountLine accountLine) {
         float totalValue;
 
@@ -230,27 +253,5 @@ public class ResponseService {
         Quote quote = doGetQuote(accountLine);
         BigDecimal latestPrice = doGetPrice(quote);
         return latestPrice.multiply(BigDecimal.valueOf(accountLine.getQuantity())).floatValue();
-    }
-
-    public String uploadError(boolean result, Model model) {
-        model.addAttribute("uploadFailed", result);
-        model.addAttribute("applicationEdgeCaseErrorMessage", result);
-        model.addAttribute("nav", "/home");
-
-        return "result";
-    }
-
-    public String deletePortfolioError(boolean result, Model model) {
-        model.addAttribute("deletePortfolioError", result);
-        model.addAttribute("nav", "/home");
-
-        return "result";
-    }
-
-    public String deleteAccountError(boolean result, Model model) {
-        model.addAttribute("deleteUserProfileError", result);
-        model.addAttribute("nav", "/user_profile");
-
-        return "result";
     }
 }

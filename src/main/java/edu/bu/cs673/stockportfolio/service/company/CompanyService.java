@@ -7,8 +7,10 @@ import org.springframework.stereotype.Service;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class CompanyService {
 
     private final CompanyRepository companyRepository;

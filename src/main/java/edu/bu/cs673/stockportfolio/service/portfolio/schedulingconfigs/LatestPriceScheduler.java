@@ -10,14 +10,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 @Configuration
 @EnableScheduling
-public class MarketDataScheduler {
+public class LatestPriceScheduler {
 
-    private static final FluentLogger LOGGER = FluentLoggerFactory.getLogger(MarketDataScheduler.class);
+    private static final FluentLogger LOGGER = FluentLoggerFactory.getLogger(LatestPriceScheduler.class);
     private final MarketDataServiceImpl marketDataServiceImpl;
     private final QuoteService quoteService;
 
-    public MarketDataScheduler(MarketDataServiceImpl marketDataServiceImpl,
-                               QuoteService quoteService) {
+    public LatestPriceScheduler(MarketDataServiceImpl marketDataServiceImpl,
+                                QuoteService quoteService) {
         this.marketDataServiceImpl = marketDataServiceImpl;
         this.quoteService = quoteService;
     }

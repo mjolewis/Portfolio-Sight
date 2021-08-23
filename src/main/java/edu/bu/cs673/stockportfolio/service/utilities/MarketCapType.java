@@ -10,7 +10,7 @@ public enum MarketCapType {
     private final long minimum;
     private final long maximum;
 
-    private MarketCapType(long minimum, long maximum) {
+    MarketCapType(long minimum, long maximum) {
         this.minimum = minimum;
         this.maximum = maximum; 
     }

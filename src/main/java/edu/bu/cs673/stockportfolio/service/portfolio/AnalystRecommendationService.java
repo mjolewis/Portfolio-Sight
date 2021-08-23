@@ -3,17 +3,28 @@ package edu.bu.cs673.stockportfolio.service.portfolio;
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendationRepository;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
+import org.fissore.slf4j.FluentLogger;
+import org.fissore.slf4j.FluentLoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
+@Transactional
 public class AnalystRecommendationService {
 
+    private static final FluentLogger LOGGER = FluentLoggerFactory.getLogger(AnalystRecommendation.class);
     private final AnalystRecommendationRepository analystRecommendationRepository;
+    private final MarketDataService marketDataService;
 
-    public AnalystRecommendationService(AnalystRecommendationRepository analystRecommendationRepository) {
+    public AnalystRecommendationService(AnalystRecommendationRepository analystRecommendationRepository,
+                                        MarketDataServiceImpl marketDataService) {
         this.analystRecommendationRepository = analystRecommendationRepository;
+        this.marketDataService = marketDataService;
     }
 
     /**
@@ -87,5 +98,49 @@ public class AnalystRecommendationService {
         }
 
         return null;
+    }
+
+    /**
+     * Gets the latest Analyst Recommendations from IEXCloud for a basket of securities. This task is scheduled by the
+     * AnalystRecommendationScheduler.
+     */
+    public void getAnalystRecommendations() {
+        LOGGER.info().log("Getting latest analyst recommendations from IEX Cloud");
+
+        List<AnalystRecommendation> existingAnalystRecommendations = analystRecommendationRepository.findAll();
+
+        // Package the existing analyst recommendations into a set for the marketDataServiceImpl
+        Set<String> allSymbols = new HashSet<>();
+        existingAnalystRecommendations.forEach(analystRecommendationToBeUpdated -> {
+            allSymbols.add(String.join(",", analystRecommendationToBeUpdated.getSymbol()));
+        });
+
+        // GET new analyst recommendations from IEX Cloud
+        if (allSymbols.size() != 0) {
+            List<AnalystRecommendation> analystRecommendations =
+                    marketDataService.doGetAnalystRecommendations(allSymbols);
+
+            analystRecommendations.forEach(analystRecommendation -> {
+                existingAnalystRecommendations.forEach(existingAnalystRecommendation -> {
+                    if (existingAnalystRecommendation.getSymbol().equals(analystRecommendation.getSymbol())) {
+
+                        // Pull the existing analyst recommendation into the persistence context
+                        Optional<AnalystRecommendation> optionalAnalystRecommendation =
+                                analystRecommendationRepository.findById(existingAnalystRecommendation.getId());
+
+                        if (optionalAnalystRecommendation.isPresent()) {
+                            AnalystRecommendation analystRecommendationToBeUpdated =
+                                    optionalAnalystRecommendation.get();
+
+                            analystRecommendationToBeUpdated.setMarketConsensusTargetPrice(
+                                    analystRecommendation.getMarketConsensusTargetPrice());
+
+                            analystRecommendationToBeUpdated.setMarketConsensus(
+                                    analystRecommendation.getMarketConsensus());
+                        }
+                    }
+                });
+            });
+        }
     }
 }

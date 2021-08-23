@@ -1,9 +1,9 @@
 package edu.bu.cs673.stockportfolio.service.portfolio;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
+import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendationRepository;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRepository;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
@@ -15,7 +15,6 @@ import edu.bu.cs673.stockportfolio.service.company.CompanyService;
 import edu.bu.cs673.stockportfolio.service.utilities.IexCloudConfig;
 import org.fissore.slf4j.FluentLogger;
 import org.fissore.slf4j.FluentLoggerFactory;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -38,18 +37,18 @@ public class MarketDataServiceImpl implements MarketDataService {
     private final String token;
     private final QuoteRepository quoteRepository;
     private final CompanyService companyService;
-    private final AnalystRecommendationService analystRecommendationService;
+    private final AnalystRecommendationRepository analystRecommendationRepository;
 
     public MarketDataServiceImpl(RestTemplate restTemplate,
                                  IexCloudConfig iexCloudConfig,
                                  QuoteRepository quoteRepository,
                                  CompanyService companyService,
-                                 AnalystRecommendationService analystRecommendationService) {
+                                 AnalystRecommendationRepository analystRecommendationRepository) {
         this.restTemplate = restTemplate;
         this.token = iexCloudConfig.getToken();
         this.quoteRepository = quoteRepository;
         this.companyService = companyService;
-        this.analystRecommendationService = analystRecommendationService;
+        this.analystRecommendationRepository = analystRecommendationRepository;
     }
 
     @Override
@@ -93,9 +92,9 @@ public class MarketDataServiceImpl implements MarketDataService {
         if (quoteRoot != null) {
             Map<String, StockQuote> stocks = quoteRoot.getStocks();
             stocks.forEach((key, value) -> {
-                Quote quoteToBeUpdated = updateExistingQuoteOrGetNewQuote(value);
-                quoteRepository.save(quoteToBeUpdated);
-                quotes.add(quoteToBeUpdated);
+                Quote quoteToBeSaved = updateExistingQuoteOrGetNewQuote(value);
+                quoteRepository.save(quoteToBeSaved);
+                quotes.add(quoteToBeSaved);
             });
         }
 
@@ -179,11 +178,49 @@ public class MarketDataServiceImpl implements MarketDataService {
             }
 
             if (analystRecommendation != null) {
-                analystRecommendationService.save(analystRecommendation[0]);
-                analystRecommendations.add(analystRecommendation[0]);
+                AnalystRecommendation analystRecommendationToBeSaved =
+                        updateExistingAnalystRecommendationOrGetNewAnalystRecommendation(analystRecommendation[0]);
+
+                analystRecommendationRepository.save(analystRecommendationToBeSaved);
+                analystRecommendations.add(analystRecommendationToBeSaved);
             }
         });
 
         return analystRecommendations;
+    }
+
+    // Update the quote if it exists, otherwise return the new quote
+    private AnalystRecommendation updateExistingAnalystRecommendationOrGetNewAnalystRecommendation(
+            AnalystRecommendation analystRecommendation) {
+
+        String symbol = analystRecommendation.getSymbol();
+
+        AnalystRecommendation existingAnalystRecommendation =
+                analystRecommendationRepository.findAnalystRecommendationBySymbol(symbol);
+
+        if (existingAnalystRecommendation != null) {
+
+            existingAnalystRecommendation.setMarketConsensusTargetPrice(
+                    analystRecommendation.getMarketConsensusTargetPrice());
+
+            existingAnalystRecommendation.setMarketConsensus(analystRecommendation.getMarketConsensus());
+
+            return existingAnalystRecommendation;
+        }
+
+        return analystRecommendation;
+    }
+
+    // Finds the given ticker symbol if it exists in the specified service
+    private boolean contains(String symbol) {
+        List<AnalystRecommendation> analystRecommendations = analystRecommendationRepository.findAll();
+
+        for (AnalystRecommendation analystRecommendation : analystRecommendations) {
+            if (analystRecommendation.getSymbol().equals(symbol)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
