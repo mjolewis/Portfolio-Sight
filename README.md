@@ -20,7 +20,16 @@ their accounts from all their brokerages or, they can upload individual CSV file
 
 
 # Features
-Stock Portfolio Dashboard features:
+
+Portfolio Overview
+* Portfolio Overview uses a combination of IEX Cloud's `/stock` and `/time-series/CORE_ESTIMATES/{symbol}` endpoints to 
+  populate the portfolio with relevant market data. Investors can use this snapshot to quickly understand a portfolio 
+  before diving into further analysis using the "Breakdown" features. Importantly, this snapshot gives investors the 
+  current Consensus Analyst Recommendations and Price Targets for each symbol in the portfolio, which is a helpful 
+  data point when comparing portfolio composition in relation to expectations from professional Wall Street analysts.
+  
+* `/time-series/CORE_ESTIMATES/{symbol}` is a paid core data endpoint. As a result, developers who want to extend this 
+  application need access to a token with a paid subscription.
 
 Stock Breakdown
 * Stock Breakdown uses IEX Cloud's `latestPrice` attribute to calculate the total market value for each symbol in the 
@@ -31,15 +40,15 @@ Stock Breakdown
   will be used.
   
 Sector Breakdown
-* Sector breakdown uses IEX Cloud's `sector` attribute to build sector allocation visualizations. The `sector` refers 
+* Sector Breakdown uses IEX Cloud's `sector` attribute to build sector allocation visualizations. The `sector` refers 
   to the sector a security belongs to.
   
 Market Cap Breakdown
-* Market cap breakdown uses IEX Cloud's `marketCap` attribute to build market cap allocation visualizations for each 
+* Market Cap Breakdown uses IEX Cloud's `marketCap` attribute to build market cap allocation visualizations for each 
   company in the portfolio. The `marketCap` of a security is calculated as shares outstanding * previous day close.
 
-Each feature `GETS` data from IEX Cloud's `/stock` endpoint using a batch call. Batch calls can return data on up to 
-one hundred symbols per request, significantly reducing network traffic.
+Each "Breakdown" feature `GETS` data from IEX Cloud's `/stock` endpoint using a batch call. Batch calls can return data 
+on up to one hundred symbols per request, significantly reducing network traffic.
 
 # Frameworks, Libraries, and Tools
 Spring Cloud:

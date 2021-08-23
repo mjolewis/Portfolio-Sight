@@ -52,6 +52,14 @@ public class AnalystRecommendation {
         this.quotes = quotes;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     @JsonProperty("symbol")
     public String getSymbol() {
         return symbol;
