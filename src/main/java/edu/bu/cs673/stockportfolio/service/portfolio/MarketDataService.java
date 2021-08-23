@@ -1,5 +1,6 @@
 package edu.bu.cs673.stockportfolio.service.portfolio;
 
+import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 
@@ -17,4 +18,6 @@ public interface MarketDataService {
     List<Quote> doGetQuotes(Set<String> symbols);
 
     List<Company> doGetCompanies(Set<String> symbols);
+
+    List<AnalystRecommendation> doGetAnalystRecommendations(Set<String> symbols);
 }

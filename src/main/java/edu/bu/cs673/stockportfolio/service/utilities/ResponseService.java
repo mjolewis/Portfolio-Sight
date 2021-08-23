@@ -62,12 +62,15 @@ public class ResponseService {
 
         accounts.forEach(account -> {
             account.getAccountLines().forEach(accountLine -> {
+                Quote quote = doGetQuote(accountLine);
                 response.add(List.of(
                         doGetCompanyName(accountLine),
-                        doGetSymbol(doGetQuote(accountLine)),
+                        doGetSymbol(quote),
                         formatQuantity(doGetQuantity(accountLine)),
-                        formatPrice(doGetPrice(doGetQuote(accountLine))),
-                        doGetMarketValue(accountLine))
+                        formatPrice(doGetPrice(quote)),
+                        doGetMarketValue(accountLine),
+                        formatPrice((doGetConsensusTargetPrice(quote))),
+                        doGetConsensusScore(quote))
                 );
             });
         });
@@ -87,13 +90,22 @@ public class ResponseService {
         return quote.getSymbol();
     }
 
-    private BigDecimal doGetPrice(Quote quote) {
-        return quote.getLatestPrice();
+    private String formatQuantity(int quantity) {
+        NumberFormat numberFormatter = NumberFormat.getNumberInstance(Locale.US);
+        return numberFormatter.format(quantity);
+    }
+
+    private int doGetQuantity(AccountLine accountLine) {
+        return accountLine.getQuantity();
     }
 
     private String formatPrice(BigDecimal price) {
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US);
         return currencyFormatter.format(price);
+    }
+
+    private BigDecimal doGetPrice(Quote quote) {
+        return quote.getLatestPrice();
     }
 
     private String doGetMarketValue(AccountLine accountLine) {
@@ -105,13 +117,12 @@ public class ResponseService {
                         .valueOf(quantity)));
     }
 
-    private int doGetQuantity(AccountLine accountLine) {
-        return accountLine.getQuantity();
+    private BigDecimal doGetConsensusTargetPrice(Quote quote) {
+        return quote.getAnalystRecommendation().getMarketConsensusTargetPrice();
     }
 
-    private String formatQuantity(int quantity) {
-        NumberFormat numberFormatter = NumberFormat.getNumberInstance(Locale.US);
-        return numberFormatter.format(quantity);
+    private String doGetConsensusScore(Quote quote) {
+        return quote.getAnalystRecommendation().getMarketConsensus().toString();
     }
 
     private String uploadSuccess(boolean result, Model model) {

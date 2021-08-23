@@ -1,5 +1,9 @@
 package edu.bu.cs673.stockportfolio.service.portfolio;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRepository;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
@@ -11,15 +15,12 @@ import edu.bu.cs673.stockportfolio.service.company.CompanyService;
 import edu.bu.cs673.stockportfolio.service.utilities.IexCloudConfig;
 import org.fissore.slf4j.FluentLogger;
 import org.fissore.slf4j.FluentLoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**********************************************************************************************************************
  * The MarketDataServiceImpl uses a synchronous client to perform HTTP requests to IEX Cloud endpoints. It retrieves
@@ -37,15 +38,18 @@ public class MarketDataServiceImpl implements MarketDataService {
     private final String token;
     private final QuoteRepository quoteRepository;
     private final CompanyService companyService;
+    private final AnalystRecommendationService analystRecommendationService;
 
     public MarketDataServiceImpl(RestTemplate restTemplate,
                                  IexCloudConfig iexCloudConfig,
                                  QuoteRepository quoteRepository,
-                                 CompanyService companyService) {
+                                 CompanyService companyService,
+                                 AnalystRecommendationService analystRecommendationService) {
         this.restTemplate = restTemplate;
         this.token = iexCloudConfig.getToken();
         this.quoteRepository = quoteRepository;
         this.companyService = companyService;
+        this.analystRecommendationService = analystRecommendationService;
     }
 
     @Override
@@ -77,7 +81,13 @@ public class MarketDataServiceImpl implements MarketDataService {
                 symbolFilter);
 
         QuoteRoot quoteRoot = restTemplate.getForObject(
-                BASE_URL + VERSION + endpointPath + queryParams + TOKEN_PARAM + token, QuoteRoot.class);
+                BASE_URL
+                        + VERSION
+                        + endpointPath
+                        + queryParams
+                        + TOKEN_PARAM
+                        + token
+                , QuoteRoot.class);
 
         List<Quote> quotes = new ArrayList<>();
         if (quoteRoot != null) {
@@ -119,14 +129,20 @@ public class MarketDataServiceImpl implements MarketDataService {
         }
 
         // If there are no new companies in this set, return early an empty list
-        if ( newSymbols.isEmpty() ) return new ArrayList<>();
+        if (newSymbols.isEmpty()) return new ArrayList<>();
 
         String symbolFilter = String.join(",", newSymbols);
         String endpointPath = "stock/market/batch";
         String queryParams = String.format("?symbols=%s&types=company&filter=symbol,sector,companyName", symbolFilter);
 
         CompanyRoot companyRoot = restTemplate.getForObject(
-                BASE_URL + VERSION + endpointPath + queryParams + TOKEN_PARAM + token, CompanyRoot.class);
+                BASE_URL
+                        + VERSION
+                        + endpointPath
+                        + queryParams
+                        + TOKEN_PARAM
+                        + token
+                , CompanyRoot.class);
 
         List<Company> companies = new ArrayList<>();
         if (companyRoot != null) {
@@ -135,5 +151,39 @@ public class MarketDataServiceImpl implements MarketDataService {
         }
 
         return companies;
+    }
+
+    @Override
+    public List<AnalystRecommendation> doGetAnalystRecommendations(Set<String> symbols) {
+
+        List<AnalystRecommendation> analystRecommendations = new ArrayList<>();
+        String queryParams = "?filter=symbol,marketConsensus,marketConsensusTargetPrice";
+        symbols.forEach(symbol -> {
+            String endpointPath = String.format("time-series/CORE_ESTIMATES/%s", symbol);
+
+            String jsonStr = restTemplate.getForObject(
+                    BASE_URL
+                            + VERSION
+                            + endpointPath
+                            + queryParams
+                            + TOKEN_PARAM
+                            + token,
+                    String.class);
+
+            ObjectMapper mapper = new ObjectMapper();
+            AnalystRecommendation[] analystRecommendation = null;
+            try {
+                analystRecommendation = mapper.readValue(jsonStr, AnalystRecommendation[].class);
+            } catch (JsonProcessingException e) {
+                LOGGER.error().log("JSON processing exception while deserializing analyst recommendations");
+            }
+
+            if (analystRecommendation != null) {
+                analystRecommendationService.save(analystRecommendation[0]);
+                analystRecommendations.add(analystRecommendation[0]);
+            }
+        });
+
+        return analystRecommendations;
     }
 }
