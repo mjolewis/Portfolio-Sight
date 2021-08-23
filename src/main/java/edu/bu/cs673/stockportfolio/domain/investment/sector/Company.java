@@ -52,11 +52,6 @@ public class Company {
     public Company() {
     }
 
-    /**
-     *
-     * @param symbol
-     * @param sector
-     */
     public Company(String symbol, String sector, String companyName, List<Quote> quotes) {
         super();
         this.symbol = symbol;
@@ -71,14 +66,6 @@ public class Company {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public List<Quote> getQuotes() {
-        return quotes;
-    }
-
-    public void setQuotes(List<Quote> quotes) {
-        this.quotes = quotes;
     }
 
     @JsonProperty("companyName")
@@ -109,5 +96,13 @@ public class Company {
     @JsonProperty("sector")
     public void setLatestPrice(String sector) {
         this.sector = sector;
+    }
+
+    public List<Quote> getQuotes() {
+        return quotes;
+    }
+
+    public void setQuotes(List<Quote> quotes) {
+        this.quotes = quotes;
     }
 }

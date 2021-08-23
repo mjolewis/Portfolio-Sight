@@ -1,6 +1,7 @@
 package edu.bu.cs673.stockportfolio.unittests.domain.investment;
 
 import edu.bu.cs673.stockportfolio.domain.account.AccountLine;
+import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 import org.junit.jupiter.api.Assertions;
@@ -23,8 +24,9 @@ public class QuoteEntityTest {
         AccountLine accountLine = new AccountLine();
         Company company = new Company();
         BigDecimal latestPrice = new BigDecimal("345.53");
+        AnalystRecommendation analystRecommendation = new AnalystRecommendation();
         quote = new Quote("Goldman Sachs, Inc.", "GS",
-                latestPrice, 127370100000L, List.of(accountLine), company);
+                latestPrice, 127370100000L, List.of(accountLine), company, analystRecommendation);
 
         Assertions.assertAll(
                 () -> Assertions.assertEquals("Goldman Sachs, Inc.", quote.getCompanyName()),

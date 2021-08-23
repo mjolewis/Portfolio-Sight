@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.sun.istack.NotNull;
 import edu.bu.cs673.stockportfolio.domain.account.AccountLine;
+import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 import org.hibernate.annotations.Check;
 
@@ -59,6 +60,10 @@ public class Quote {
     @JoinColumn(name = "company_id")
     private Company company;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "analystRecommendation_id")
+    private AnalystRecommendation analystRecommendation;
+
     /**
      * No args constructor for use in serialization.
      */
@@ -72,23 +77,17 @@ public class Quote {
      * @param latestPrice Either the realtime price if the market is open. Otherwise, the closing price.
      * @param marketCap The market capitalization of the company represented by the symbol.
      * @param accountLines A collection of all the different owned lots within an account.
+     * @param company A representation of the Company associated with this quote.
+     * @param analystRecommendation A representation of the consensus estimates from Wall Street analysts.
      */
-    public Quote(String companyName, String symbol, BigDecimal latestPrice,
-                 Long marketCap, List<AccountLine> accountLines, Company company) {
+    public Quote(String companyName, String symbol, BigDecimal latestPrice, Long marketCap,
+                 List<AccountLine> accountLines, Company company, AnalystRecommendation analystRecommendation) {
         super();
         this.companyName = companyName;
         this.symbol = symbol;
         this.latestPrice = latestPrice;
         this.marketCap = marketCap;
         this.accountLines = accountLines;
-        this.company = company;
-    }
-
-    public Company getCompany() {
-        return company;
-    }
-
-    public void setCompany(Company company) {
         this.company = company;
     }
 
@@ -148,4 +147,19 @@ public class Quote {
         this.accountLines = accounts;
     }
 
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
+    }
+
+    public AnalystRecommendation getAnalystRecommendation() {
+        return analystRecommendation;
+    }
+
+    public void setAnalystRecommendation(AnalystRecommendation analystRecommendation) {
+        this.analystRecommendation = analystRecommendation;
+    }
 }

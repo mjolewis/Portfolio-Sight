@@ -95,7 +95,7 @@ public class CompanyServiceTest {
         when(companyRepository.save(company)).thenReturn(company);
         when(companyRepository.findById(company.getId())).thenReturn(Optional.ofNullable(company));
 
-        companyService.add(company);
+        companyService.save(company);
 
         Optional<Company> result = companyRepository.findById(company.getId());
 

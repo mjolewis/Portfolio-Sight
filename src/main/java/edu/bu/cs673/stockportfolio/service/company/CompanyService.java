@@ -18,7 +18,18 @@ public class CompanyService {
     }
 
     /**
-     * Returns if the CompanyRepository holds the input parameter symbol
+     * If the CompanyRepository doesn't have this company, add it.
+     *
+     * @param company Company to add if not already in repository.
+     */
+    public void save(Company company) {
+        if (!this.contains(company.getSymbol())) {
+            companyRepository.save(company);
+        }
+    }
+
+    /**
+     * Returns true if the CompanyRepository holds the input parameter symbol
      *
      * @param symbol The ticker symbol of a company.
      * @return True if the repository already has this symbol
@@ -63,16 +74,5 @@ public class CompanyService {
         }
 
         return null;
-    }
-
-    /**
-     * If the CompanyRepository doesn't have this company, add it.
-     *
-     * @param company Company to add if not already in repository.
-     */
-    public void add(Company company) {
-        if (!this.contains(company.getSymbol())) {
-            companyRepository.save(company);
-        }
     }
 }

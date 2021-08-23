@@ -3,6 +3,7 @@ package edu.bu.cs673.stockportfolio.service.portfolio;
 import edu.bu.cs673.stockportfolio.domain.account.Account;
 import edu.bu.cs673.stockportfolio.domain.account.AccountLine;
 import edu.bu.cs673.stockportfolio.domain.account.AccountLineRepository;
+import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 import edu.bu.cs673.stockportfolio.domain.portfolio.Portfolio;
@@ -35,15 +36,18 @@ public class PortfolioService {
     private final MarketDataServiceImpl marketDataServiceImpl;
     private final AccountLineRepository accountLineRepository;
     private final CompanyService companyService;
+    private final AnalystRecommendationService analystRecommendationService;
 
     public PortfolioService(PortfolioRepository portfolioRepository,
                             MarketDataServiceImpl marketDataServiceImpl,
                             AccountLineRepository accountLineRepository,
-                            CompanyService companyService) {
+                            CompanyService companyService,
+                            AnalystRecommendationService analystRecommendationService) {
         this.portfolioRepository = portfolioRepository;
         this.marketDataServiceImpl = marketDataServiceImpl;
         this.accountLineRepository = accountLineRepository;
         this.companyService = companyService;
+        this.analystRecommendationService = analystRecommendationService;
     }
 
     /**
@@ -66,6 +70,7 @@ public class PortfolioService {
         Map<String, Map<String, Integer>> portfolioData = null;
         List<Quote> quotes = null;
         List<Company> companies;
+        List<AnalystRecommendation> analystRecommendations;
         if (records != null) {
             portfolioData = doInternalParse(records);
 
@@ -77,6 +82,11 @@ public class PortfolioService {
             companies = marketDataServiceImpl.doGetCompanies(allSymbols);
             doCreateCompanies(companies);
             companyService.doLinkQuotes(quotes);
+
+            // Collect analyst recommendations for the symbols being imported and make an association to its quotes
+            analystRecommendations = marketDataServiceImpl.doGetAnalystRecommendations(allSymbols);
+            doCreateAnalystRecommendations(analystRecommendations);
+            analystRecommendationService.doLinkQuotes(quotes);
         }
 
         Portfolio savedPortfolio = null;
@@ -158,15 +168,14 @@ public class PortfolioService {
         return allSymbols;
     }
 
-    private Set<String> doGetAllSymbols(List<List<AccountLine>> portfolioData) {
-        Set<String> allSymbols = new HashSet<>();
-        portfolioData.forEach(accountLines -> {
-            accountLines.forEach(accountLine -> {
-                allSymbols.add(String.join(",", accountLine.getQuote().getSymbol()));
-            });
-        });
+    // Persist new companies
+    private void doCreateCompanies(List<Company> companies) {
+        companies.forEach(companyService::save);
+    }
 
-        return allSymbols;
+    // Persist new analyst recommendations
+    private void doCreateAnalystRecommendations(List<AnalystRecommendation> analystRecommendations) {
+        analystRecommendations.forEach(analystRecommendationService::save);
     }
 
     // Update or add new portfolio data depending on the existence of the associated account
@@ -218,19 +227,6 @@ public class PortfolioService {
     // Instantiate a new account
     private Account doCreateAccount(Portfolio portfolio, String accountNumber) {
         return new Account(portfolio, accountNumber);
-    }
-
-    /**
-     * Add new companies to the Company Table
-     * 
-     * @param companies List of companies to be added to the database
-     */
-    private void doCreateCompanies(List<Company> companies) {
-        
-        for (Company company : companies) {
-            
-            companyService.add(company);
-        }
     }
 
     // Find all symbols and quantities within an account, add the quote from IEX Cloud and a new account line.
