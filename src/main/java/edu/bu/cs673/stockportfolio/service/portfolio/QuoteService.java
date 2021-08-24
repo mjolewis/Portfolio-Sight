@@ -2,15 +2,14 @@ package edu.bu.cs673.stockportfolio.service.portfolio;
 
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRepository;
+import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
+import edu.bu.cs673.stockportfolio.domain.investment.quote.StockQuote;
 import org.fissore.slf4j.FluentLogger;
 import org.fissore.slf4j.FluentLoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class QuoteService {
@@ -22,6 +21,36 @@ public class QuoteService {
     public QuoteService(QuoteRepository quoteRepository, MarketDataServiceImpl marketDataServiceImpl) {
         this.quoteRepository = quoteRepository;
         this.marketDataServiceImpl = marketDataServiceImpl;
+    }
+
+    @Transactional
+    public List<Quote> processQuoteRootRestTemplate(QuoteRoot quoteRoot) {
+        List<Quote> quotes = new ArrayList<>();
+        if (quoteRoot != null) {
+            Map<String, StockQuote> stocks = quoteRoot.getStocks();
+            stocks.forEach((key, value) -> {
+                Quote quoteToBeSaved = updateExistingQuoteOrGetNewQuote(value);
+                quoteRepository.save(quoteToBeSaved);
+                quotes.add(quoteToBeSaved);
+            });
+        }
+
+        return quotes;
+    }
+
+    // Update the quote if it exists, otherwise return the new quote
+    private Quote updateExistingQuoteOrGetNewQuote(StockQuote stockQuote) {
+        Quote quote = stockQuote.getQuote();
+        String symbol = quote.getSymbol();
+
+        Quote existingQuote = quoteRepository.findQuoteBySymbol(symbol);
+        if (existingQuote != null) {
+            existingQuote.setMarketCap(quote.getMarketCap());
+            existingQuote.setLatestPrice(quote.getLatestPrice());
+            return existingQuote;
+        }
+
+        return quote;
     }
 
     /**
@@ -41,7 +70,8 @@ public class QuoteService {
 
         // GET new quotes from IEX Cloud
         if (allSymbols.size() != 0) {
-            List<Quote> quotes = marketDataServiceImpl.doGetQuotes(allSymbols);
+            QuoteRoot quoteRoot = marketDataServiceImpl.doGetQuotes(allSymbols);
+            List<Quote> quotes = processQuoteRootRestTemplate(quoteRoot);
 
             quotes.forEach(quote -> {
                 existingQuotes.forEach(existingQuote -> {

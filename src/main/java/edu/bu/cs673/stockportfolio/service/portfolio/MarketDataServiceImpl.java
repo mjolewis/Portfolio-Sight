@@ -4,14 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendationRepository;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRepository;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.StockQuote;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.StockSector;
-import edu.bu.cs673.stockportfolio.service.company.CompanyService;
 import edu.bu.cs673.stockportfolio.service.utilities.IexCloudConfig;
 import org.fissore.slf4j.FluentLogger;
 import org.fissore.slf4j.FluentLoggerFactory;
@@ -19,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**********************************************************************************************************************
@@ -35,25 +30,20 @@ public class MarketDataServiceImpl implements MarketDataService {
     private static final String TOKEN_PARAM = "&token=";
     private final RestTemplate restTemplate;
     private final String token;
-    private final QuoteRepository quoteRepository;
-    private final CompanyService companyService;
     private final AnalystRecommendationRepository analystRecommendationRepository;
 
     public MarketDataServiceImpl(RestTemplate restTemplate,
                                  IexCloudConfig iexCloudConfig,
-                                 QuoteRepository quoteRepository,
-                                 CompanyService companyService,
                                  AnalystRecommendationRepository analystRecommendationRepository) {
         this.restTemplate = restTemplate;
         this.token = iexCloudConfig.getToken();
-        this.quoteRepository = quoteRepository;
-        this.companyService = companyService;
         this.analystRecommendationRepository = analystRecommendationRepository;
     }
 
     @Override
     public boolean isUSMarketOpen() {
         LOGGER.info().log("Checking if US Market is open");
+
         // Use a well known symbol to check if market is open.
         String symbol = "GS";
         String field = "isUSMarketOpen";
@@ -66,7 +56,7 @@ public class MarketDataServiceImpl implements MarketDataService {
     }
 
     @Override
-    public List<Quote> doGetQuotes(Set<String> symbols) {
+    public QuoteRoot doGetQuotes(Set<String> symbols) {
 
         // Convert the Set of Strings to a String for batch IEX request
         String symbolFilter = String.join(",", symbols);
@@ -79,7 +69,8 @@ public class MarketDataServiceImpl implements MarketDataService {
                         + "marketCap",
                 symbolFilter);
 
-        QuoteRoot quoteRoot = restTemplate.getForObject(
+        LOGGER.info().log("Getting quotes from IEX Cloud for {}", symbolFilter);
+        return restTemplate.getForObject(
                 BASE_URL
                         + VERSION
                         + endpointPath
@@ -87,54 +78,17 @@ public class MarketDataServiceImpl implements MarketDataService {
                         + TOKEN_PARAM
                         + token
                 , QuoteRoot.class);
-
-        List<Quote> quotes = new ArrayList<>();
-        if (quoteRoot != null) {
-            Map<String, StockQuote> stocks = quoteRoot.getStocks();
-            stocks.forEach((key, value) -> {
-                Quote quoteToBeSaved = updateExistingQuoteOrGetNewQuote(value);
-                quoteRepository.save(quoteToBeSaved);
-                quotes.add(quoteToBeSaved);
-            });
-        }
-
-        return quotes;
-    }
-
-    // Update the quote if it exists, otherwise return the new quote
-    private Quote updateExistingQuoteOrGetNewQuote(StockQuote stockQuote) {
-        Quote quote = stockQuote.getQuote();
-        String symbol = quote.getSymbol();
-
-        Quote existingQuote = quoteRepository.findQuoteBySymbol(symbol);
-        if (existingQuote != null) {
-            existingQuote.setMarketCap(quote.getMarketCap());
-            existingQuote.setLatestPrice(quote.getLatestPrice());
-            return existingQuote;
-        }
-
-        return quote;
     }
 
     @Override
-    public List<Company> doGetCompanies(Set<String> symbols) {
+    public CompanyRoot doGetCompanies(Set<String> symbols) {
 
-        // Don't retrieve Company data that we already have so remove existing symbols from the request.
-        Set<String> newSymbols = new HashSet<>();
-        for (String symbol : symbols) {
-            if (!companyService.contains(symbol)) {
-                newSymbols.add(symbol);
-            }
-        }
-
-        // If there are no new companies in this set, return early an empty list
-        if (newSymbols.isEmpty()) return new ArrayList<>();
-
-        String symbolFilter = String.join(",", newSymbols);
+        String symbolFilter = String.join(",", symbols);
         String endpointPath = "stock/market/batch";
         String queryParams = String.format("?symbols=%s&types=company&filter=symbol,sector,companyName", symbolFilter);
 
-        CompanyRoot companyRoot = restTemplate.getForObject(
+        LOGGER.info().log("Getting company data from IEX Cloud for {}", symbolFilter);
+        return restTemplate.getForObject(
                 BASE_URL
                         + VERSION
                         + endpointPath
@@ -142,14 +96,6 @@ public class MarketDataServiceImpl implements MarketDataService {
                         + TOKEN_PARAM
                         + token
                 , CompanyRoot.class);
-
-        List<Company> companies = new ArrayList<>();
-        if (companyRoot != null) {
-            Map<String, StockSector> companyData = companyRoot.getCompanies();
-            companyData.forEach((key, value) -> companies.add(value.getCompany()));
-        }
-
-        return companies;
     }
 
     @Override
@@ -158,8 +104,9 @@ public class MarketDataServiceImpl implements MarketDataService {
         List<AnalystRecommendation> analystRecommendations = new ArrayList<>();
         String queryParams = "?filter=symbol,marketConsensus,marketConsensusTargetPrice";
         symbols.forEach(symbol -> {
-            String endpointPath = String.format("time-series/CORE_ESTIMATES/%s", symbol);
+            LOGGER.error().log("Getting analyst recommendation for {}", symbol);
 
+            String endpointPath = String.format("time-series/CORE_ESTIMATES/%s", symbol);
             String jsonStr = restTemplate.getForObject(
                     BASE_URL
                             + VERSION
@@ -174,15 +121,22 @@ public class MarketDataServiceImpl implements MarketDataService {
             try {
                 analystRecommendation = mapper.readValue(jsonStr, AnalystRecommendation[].class);
             } catch (JsonProcessingException e) {
-                LOGGER.error().log("JSON processing exception while deserializing analyst recommendations");
+                LOGGER.error().log("JSON processing exception deserializing analyst recommendation for {}", symbol);
             }
 
-            if (analystRecommendation != null) {
+            try {
                 AnalystRecommendation analystRecommendationToBeSaved =
                         updateExistingAnalystRecommendationOrGetNewAnalystRecommendation(analystRecommendation[0]);
 
-                analystRecommendationRepository.save(analystRecommendationToBeSaved);
                 analystRecommendations.add(analystRecommendationToBeSaved);
+            } catch (NullPointerException | IndexOutOfBoundsException e) {
+                // Fail gracefully by logging error and allow the program to continue executing
+                LOGGER.error().log("Error. No analyst recommendation found for {}.", symbol);
+                AnalystRecommendation failSafe = new AnalystRecommendation();
+                failSafe.setSymbol(symbol);
+                failSafe.setMarketConsensus(0F);
+                failSafe.setMarketConsensusTargetPrice(new BigDecimal("0"));
+                analystRecommendations.add(failSafe);
             }
         });
 
@@ -209,18 +163,5 @@ public class MarketDataServiceImpl implements MarketDataService {
         }
 
         return analystRecommendation;
-    }
-
-    // Finds the given ticker symbol if it exists in the specified service
-    private boolean contains(String symbol) {
-        List<AnalystRecommendation> analystRecommendations = analystRecommendationRepository.findAll();
-
-        for (AnalystRecommendation analystRecommendation : analystRecommendations) {
-            if (analystRecommendation.getSymbol().equals(symbol)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

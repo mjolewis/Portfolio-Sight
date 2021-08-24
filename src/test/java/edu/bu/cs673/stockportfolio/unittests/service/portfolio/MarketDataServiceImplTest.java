@@ -11,6 +11,7 @@ import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.StockSector;
 import edu.bu.cs673.stockportfolio.service.company.CompanyService;
 import edu.bu.cs673.stockportfolio.service.portfolio.MarketDataServiceImpl;
+import edu.bu.cs673.stockportfolio.service.portfolio.QuoteService;
 import edu.bu.cs673.stockportfolio.service.utilities.IexCloudConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +45,9 @@ public class MarketDataServiceImplTest {
 
     @Mock
     private QuoteRepository quoteRepository;
+
+    @Mock
+    private QuoteService quoteService;
 
     @Mock
     private CompanyService companyService;
@@ -93,7 +97,8 @@ public class MarketDataServiceImplTest {
 
         when(quoteRepository.save(quote)).thenReturn(quote);
 
-        List<Quote> result = marketDataService.doGetQuotes(symbols);
+        QuoteRoot quoteRootResponse = marketDataService.doGetQuotes(symbols);
+        List<Quote> result = quoteService.processQuoteRootRestTemplate(quoteRootResponse);
 
         Assertions.assertEquals(quote, result.get(0));
     }
@@ -115,7 +120,8 @@ public class MarketDataServiceImplTest {
                 BASE_URL + VERSION + endpointPath + queryParams + TOKEN + apiKey, CompanyRoot.class))
                 .thenReturn(companyRoot);
 
-        List<Company> result = marketDataService.doGetCompanies(symbols);
+        CompanyRoot companyRoot1 = marketDataService.doGetCompanies(symbols);
+        List<Company> result = companyService.processCompanyRootRestTemplate(companyRoot1);
 
         Assertions.assertEquals(company, result.get(0));
     }

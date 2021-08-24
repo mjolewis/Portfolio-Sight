@@ -25,12 +25,8 @@ public class LatestPriceScheduler {
     /**
      * Configures the schedule for getting updated market quotes from IEX Cloud. The task uses cron scheduling to run
      * every minute from 9:00 AM to 4:00 PM Eastern time every day-of-week from Monday through Friday.
-     *
-     * @Note The zone must be updated to either EDT or EST. EDT is represented by GMT−4 and EST is represented by
-     *         GMT−5. EST runs from March to November. It starts during the first Sunday of November until the
-     *         second Sunday of March. In the second Sunday of March, clocks switch into the Eastern Daylight Time
      */
-    @Scheduled(cron = "0 */1 9-16 * * MON-FRI", zone = "GMT−4")
+    @Scheduled(cron = "0 */1 9-16 * * MON-FRI", zone = "America/New_York")
     public void startSchedule() {
         boolean isMarketOpen = isUSMarketOpen();
         if (isMarketOpen) {

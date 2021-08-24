@@ -1,8 +1,8 @@
 package edu.bu.cs673.stockportfolio.service.portfolio;
 
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
+import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
+import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
 
 import java.util.List;
 import java.util.Set;
@@ -15,9 +15,9 @@ public interface MarketDataService {
 
     boolean isUSMarketOpen();
 
-    List<Quote> doGetQuotes(Set<String> symbols);
+    QuoteRoot doGetQuotes(Set<String> symbols);
 
-    List<Company> doGetCompanies(Set<String> symbols);
+    CompanyRoot doGetCompanies(Set<String> symbols);
 
     List<AnalystRecommendation> doGetAnalystRecommendations(Set<String> symbols);
 }

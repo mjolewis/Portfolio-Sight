@@ -5,7 +5,9 @@ import edu.bu.cs673.stockportfolio.domain.account.AccountLine;
 import edu.bu.cs673.stockportfolio.domain.account.AccountLineRepository;
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
+import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
+import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
 import edu.bu.cs673.stockportfolio.domain.portfolio.Portfolio;
 import edu.bu.cs673.stockportfolio.domain.portfolio.PortfolioRepository;
 import edu.bu.cs673.stockportfolio.domain.user.User;
@@ -35,17 +37,20 @@ public class PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final MarketDataServiceImpl marketDataServiceImpl;
     private final AccountLineRepository accountLineRepository;
+    private final QuoteService quoteService;
     private final CompanyService companyService;
     private final AnalystRecommendationService analystRecommendationService;
 
     public PortfolioService(PortfolioRepository portfolioRepository,
                             MarketDataServiceImpl marketDataServiceImpl,
                             AccountLineRepository accountLineRepository,
+                            QuoteService quoteService,
                             CompanyService companyService,
                             AnalystRecommendationService analystRecommendationService) {
         this.portfolioRepository = portfolioRepository;
         this.marketDataServiceImpl = marketDataServiceImpl;
         this.accountLineRepository = accountLineRepository;
+        this.quoteService = quoteService;
         this.companyService = companyService;
         this.analystRecommendationService = analystRecommendationService;
     }
@@ -76,12 +81,17 @@ public class PortfolioService {
 
             // Collect all symbols in the portfolio and send them as a a batch request to IEX Cloud
             Set<String> allSymbols = doGetAllSymbols(portfolioData);
-            quotes = marketDataServiceImpl.doGetQuotes(allSymbols);
+            QuoteRoot quoteRoot = marketDataServiceImpl.doGetQuotes(allSymbols);
+            quotes = quoteService.processQuoteRootRestTemplate(quoteRoot);
 
             // Collect company data for the symbols being imported and make an association to its quotes
-            companies = marketDataServiceImpl.doGetCompanies(allSymbols);
-            doCreateCompanies(companies);
-            companyService.doLinkQuotes(quotes);
+            Set<String> newCompanySymbols = companyService.filterCompaniesBySymbolNotInDb(allSymbols);
+            if (!newCompanySymbols.isEmpty()) {
+                CompanyRoot companyRoot = marketDataServiceImpl.doGetCompanies(allSymbols);
+                companies = companyService.processCompanyRootRestTemplate(companyRoot);
+                doCreateCompanies(companies);
+                companyService.doLinkQuotes(quotes);
+            }
 
             // Collect analyst recommendations for the symbols being imported and make an association to its quotes
             analystRecommendations = marketDataServiceImpl.doGetAnalystRecommendations(allSymbols);
@@ -161,8 +171,8 @@ public class PortfolioService {
 
     private Set<String> doGetAllSymbols(Map<String, Map<String, Integer>> portfolioData) {
         Set<String> allSymbols = new HashSet<>();
-        portfolioData.forEach((account, accountLine)-> {
-            allSymbols.add(String.join(",", accountLine.keySet()));
+        portfolioData.forEach((account, accountLines)-> {
+            accountLines.forEach((symbol, quantity) -> allSymbols.add(symbol));
         });
 
         return allSymbols;

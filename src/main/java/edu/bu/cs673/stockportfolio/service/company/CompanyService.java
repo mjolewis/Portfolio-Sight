@@ -1,7 +1,9 @@
 package edu.bu.cs673.stockportfolio.service.company;
 
-import java.util.List;
+import java.util.*;
 
+import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
+import edu.bu.cs673.stockportfolio.domain.investment.sector.StockSector;
 import org.springframework.stereotype.Service;
 
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
@@ -20,14 +22,21 @@ public class CompanyService {
     }
 
     /**
-     * If the CompanyRepository doesn't have this company, add it.
+     * Filter Companies by symbol to discover only the Companies that don't exist in the database. This is used as an
+     * optimization before sending requests to IEX Clouds company endpoint.
      *
-     * @param company Company to add if not already in repository.
+     * @param symbols A set of all symbols within the portfolio being uploaded.
+     * @return A Set of symbols that represent companies not yet in the database.
      */
-    public void save(Company company) {
-        if (!this.contains(company.getSymbol())) {
-            companyRepository.save(company);
+    public Set<String> filterCompaniesBySymbolNotInDb(Set<String> symbols) {
+        Set<String> companySymbolsNotInDb = new HashSet<>();
+        for (String symbol : symbols) {
+            if (!contains(symbol)) {
+                companySymbolsNotInDb.add(symbol);
+            }
         }
+
+        return companySymbolsNotInDb;
     }
 
     /**
@@ -43,6 +52,28 @@ public class CompanyService {
         }
 
         return false;
+    }
+
+    public List<Company> processCompanyRootRestTemplate(CompanyRoot companyRoot) {
+
+        List<Company> companies = new ArrayList<>();
+        if (companyRoot != null) {
+            Map<String, StockSector> companyData = companyRoot.getCompanies();
+            companyData.forEach((key, value) -> companies.add(value.getCompany()));
+        }
+
+        return companies;
+    }
+
+    /**
+     * If the CompanyRepository doesn't have this company, add it.
+     *
+     * @param company Company to add if not already in repository.
+     */
+    public void save(Company company) {
+        if (!this.contains(company.getSymbol())) {
+            companyRepository.save(company);
+        }
     }
 
     /**
