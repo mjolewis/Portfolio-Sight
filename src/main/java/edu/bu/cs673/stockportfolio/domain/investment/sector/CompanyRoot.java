@@ -7,15 +7,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CompanyRoot {
-    private Map<String, StockSector> companies = new LinkedHashMap<>();
+    private final Map<String, CompanySector> companySectors = new LinkedHashMap<>();
 
     @JsonAnyGetter
-    public Map<String, StockSector> getCompanies() {
-        return this.companies;
+    public Map<String, CompanySector> getCompanySectors() {
+        return this.companySectors;
     }
 
     @JsonAnySetter
-    public void addCompany(String ticker, StockSector sector) {
-        this.companies.put(ticker, sector);
+    public void addCompanySector(String ticker, CompanySector sector) {
+        this.companySectors.put(ticker, sector);
     }
 }

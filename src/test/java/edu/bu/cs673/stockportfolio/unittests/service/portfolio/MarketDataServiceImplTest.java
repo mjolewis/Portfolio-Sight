@@ -8,7 +8,7 @@ import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.StockQuote;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.StockSector;
+import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanySector;
 import edu.bu.cs673.stockportfolio.service.company.CompanyService;
 import edu.bu.cs673.stockportfolio.service.portfolio.MarketDataServiceImpl;
 import edu.bu.cs673.stockportfolio.service.portfolio.QuoteService;
@@ -23,9 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /*
  * https://rieckpil.de/difference-between-mock-and-mockbean-spring-boot-applications/
@@ -76,7 +74,7 @@ public class MarketDataServiceImplTest {
     }
 
     @Test
-    public void getQuotesFromMarketDataApiShouldReturnValidQuotesAndGetConvertedIntoEntities() {
+    public void getQuotesFromMarketDataApiShouldReturnValidQuote() {
         // Convert the Set of Strings to a String for batch IEX request
         String symbolFilter = String.join(",", symbols);
         String endpointPath = "stock/market/batch";
@@ -95,16 +93,18 @@ public class MarketDataServiceImplTest {
         when(restTemplate.getForObject(BASE_URL + VERSION + endpointPath
                 + queryParams + TOKEN + apiKey, QuoteRoot.class)).thenReturn(quoteRoot);
 
-        when(quoteRepository.save(quote)).thenReturn(quote);
-
         QuoteRoot quoteRootResponse = marketDataService.doGetQuotes(symbols);
-        List<Quote> result = quoteService.processQuoteRootRestTemplate(quoteRootResponse);
 
-        Assertions.assertEquals(quote, result.get(0));
+        Map<String, StockQuote> stocks = quoteRootResponse.getStocks();
+
+        Collection<StockQuote> stockQuotes = stocks.values();
+        stockQuotes.forEach(value -> {
+            Assertions.assertEquals(quote, value.getQuote());
+        });
     }
 
     @Test
-    public void getCompaniesFromMarketDataApiShouldReturnValidListOfCompaniesConvertedIntoEntities() {
+    public void getCompaniesFromMarketDataApiShouldReturnValidCompany() {
         String symbolFilter = String.join(",", symbols);
         String endpointPath = "stock/market/batch";
         String queryParams = String.format("?symbols=%s&types=company&filter=symbol,sector,companyName", symbolFilter);
@@ -112,17 +112,19 @@ public class MarketDataServiceImplTest {
         List<Quote> quotes = List.of(quote);
         Company company =
                 new Company("GS", "Financial Services", "Goldman Sachs, Inc.", quotes);
-        StockSector companySector = new StockSector(company);
+        CompanySector companySector = new CompanySector(company);
         CompanyRoot companyRoot = new CompanyRoot();
-        companyRoot.addCompany("GS", companySector);
+        companyRoot.addCompanySector("GS", companySector);
 
         when(restTemplate.getForObject(
                 BASE_URL + VERSION + endpointPath + queryParams + TOKEN + apiKey, CompanyRoot.class))
                 .thenReturn(companyRoot);
 
-        CompanyRoot companyRoot1 = marketDataService.doGetCompanies(symbols);
-        List<Company> result = companyService.processCompanyRootRestTemplate(companyRoot1);
+        CompanyRoot response = marketDataService.doGetCompanies(symbols);
 
-        Assertions.assertEquals(company, result.get(0));
+        Map<String, CompanySector> sectors = response.getCompanySectors();
+
+        Collection<CompanySector> companies = sectors.values();
+        companies.forEach(value -> Assertions.assertEquals(company, value.getCompany()));
     }
 }

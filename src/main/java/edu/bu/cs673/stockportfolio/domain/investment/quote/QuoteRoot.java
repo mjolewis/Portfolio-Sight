@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class QuoteRoot {
-    private Map<String, StockQuote> stocks = new LinkedHashMap<>();
+    private final Map<String, StockQuote> stocks = new LinkedHashMap<>();
 
     @JsonAnyGetter
     public Map<String, StockQuote> getStocks() {
