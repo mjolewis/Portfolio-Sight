@@ -3,7 +3,7 @@ package edu.bu.cs673.stockportfolio.service.company;
 import java.util.*;
 
 import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.StockSector;
+import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanySector;
 import org.springframework.stereotype.Service;
 
 import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
@@ -58,7 +58,7 @@ public class CompanyService {
 
         List<Company> companies = new ArrayList<>();
         if (companyRoot != null) {
-            Map<String, StockSector> companyData = companyRoot.getCompanies();
+            Map<String, CompanySector> companyData = companyRoot.getCompanySectors();
             companyData.forEach((key, value) -> companies.add(value.getCompany()));
         }
 

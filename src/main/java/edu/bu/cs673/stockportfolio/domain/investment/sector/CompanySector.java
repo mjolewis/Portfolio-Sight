@@ -7,15 +7,15 @@ import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
 @JsonPropertyOrder({
         "company"
 })
-public class StockSector {
+public class CompanySector {
 
     @JsonProperty("company")
     private Company company;
 
-    public StockSector() {
+    public CompanySector() {
     }
 
-    public StockSector(Company company) {
+    public CompanySector(Company company) {
         this.company = company;
     }
 
