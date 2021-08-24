@@ -103,6 +103,8 @@ public class MarketDataServiceImpl implements MarketDataService {
 
         List<AnalystRecommendation> analystRecommendations = new ArrayList<>();
         String queryParams = "?filter=symbol,marketConsensus,marketConsensusTargetPrice";
+
+        // Process symbol-by-symbol requests. This endpoint does not allow batch requests.
         symbols.forEach(symbol -> {
             LOGGER.error().log("Getting analyst recommendation for {}", symbol);
 
@@ -116,6 +118,7 @@ public class MarketDataServiceImpl implements MarketDataService {
                             + token,
                     String.class);
 
+            // The mapper provides functionality for writing IEX Cloud response into a POJO
             ObjectMapper mapper = new ObjectMapper();
             AnalystRecommendation[] analystRecommendation = null;
             try {
@@ -124,6 +127,8 @@ public class MarketDataServiceImpl implements MarketDataService {
                 LOGGER.error().log("JSON processing exception deserializing analyst recommendation for {}", symbol);
             }
 
+            // IEX Cloud returns an array containing the recommendation for the specified symbol. Extract that
+            // recommendation and either update or create a new recommendation based on its prior existence.
             try {
                 AnalystRecommendation analystRecommendationToBeSaved =
                         updateExistingAnalystRecommendationOrGetNewAnalystRecommendation(analystRecommendation[0]);
@@ -132,6 +137,7 @@ public class MarketDataServiceImpl implements MarketDataService {
             } catch (NullPointerException | IndexOutOfBoundsException e) {
                 // Fail gracefully by logging error and allow the program to continue executing
                 LOGGER.error().log("Error. No analyst recommendation found for {}.", symbol);
+
                 AnalystRecommendation failSafe = new AnalystRecommendation();
                 failSafe.setSymbol(symbol);
                 failSafe.setMarketConsensus(0F);
