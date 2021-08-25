@@ -3,7 +3,6 @@ package edu.bu.cs673.stockportfolio.service.portfolio;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
-import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendationRepository;
 import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
 import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
 import edu.bu.cs673.stockportfolio.service.utilities.IexCloudConfig;
@@ -18,7 +17,7 @@ import java.util.*;
 
 /**********************************************************************************************************************
  * The MarketDataServiceImpl uses a synchronous client to perform HTTP requests to IEX Cloud endpoints. It retrieves
- * representations for the products Quote and Company entities and persists them into the database.
+ * representations for the products Quote, Company, and Analyst Recommendation entities.
  *********************************************************************************************************************/
 @Service
 @Transactional
@@ -30,27 +29,23 @@ public class MarketDataServiceImpl implements MarketDataService {
     private static final String TOKEN_PARAM = "&token=";
     private final RestTemplate restTemplate;
     private final String token;
-    private final AnalystRecommendationRepository analystRecommendationRepository;
 
     public MarketDataServiceImpl(RestTemplate restTemplate,
-                                 IexCloudConfig iexCloudConfig,
-                                 AnalystRecommendationRepository analystRecommendationRepository) {
+                                 IexCloudConfig iexCloudConfig) {
         this.restTemplate = restTemplate;
         this.token = iexCloudConfig.getToken();
-        this.analystRecommendationRepository = analystRecommendationRepository;
     }
 
     @Override
     public boolean isUSMarketOpen() {
         LOGGER.info().log("Checking if US Market is open");
 
-        // Use a well known symbol to check if market is open.
+        // Use a well known symbol to check if market is open
         String symbol = "GS";
         String field = "isUSMarketOpen";
-        String endpointPath = String.format("stock/%s/quote/%s?token=", symbol, field);
+        String endpoint = String.format("stock/%s/quote/%s?token=", symbol, field);
 
-        Boolean isUSMarketOpen = restTemplate.getForObject(
-                BASE_URL + VERSION + endpointPath + token, Boolean.class);
+        Boolean isUSMarketOpen = restTemplate.getForObject(BASE_URL + VERSION + endpoint + token, Boolean.class);
 
        return isUSMarketOpen != null && isUSMarketOpen;
     }
@@ -60,7 +55,7 @@ public class MarketDataServiceImpl implements MarketDataService {
 
         // Convert the Set of Strings to a String for batch IEX request
         String symbolFilter = String.join(",", symbols);
-        String endpointPath = "stock/market/batch";
+        String endpoint = "stock/market/batch";
         String queryParams = String.format(
                 "?symbols=%s&types=quote&filter="
                         + "companyName,"
@@ -73,7 +68,7 @@ public class MarketDataServiceImpl implements MarketDataService {
         return restTemplate.getForObject(
                 BASE_URL
                         + VERSION
-                        + endpointPath
+                        + endpoint
                         + queryParams
                         + TOKEN_PARAM
                         + token
@@ -84,14 +79,14 @@ public class MarketDataServiceImpl implements MarketDataService {
     public CompanyRoot doGetCompanies(Set<String> symbols) {
 
         String symbolFilter = String.join(",", symbols);
-        String endpointPath = "stock/market/batch";
+        String endpoint = "stock/market/batch";
         String queryParams = String.format("?symbols=%s&types=company&filter=symbol,sector,companyName", symbolFilter);
 
         LOGGER.info().log("Getting company data from IEX Cloud for {}", symbolFilter);
         return restTemplate.getForObject(
                 BASE_URL
                         + VERSION
-                        + endpointPath
+                        + endpoint
                         + queryParams
                         + TOKEN_PARAM
                         + token
@@ -104,9 +99,9 @@ public class MarketDataServiceImpl implements MarketDataService {
         List<AnalystRecommendation> analystRecommendations = new ArrayList<>();
         String queryParams = "?filter=symbol,marketConsensus,marketConsensusTargetPrice";
 
-        // Process symbol-by-symbol requests. This endpoint does not allow batch requests.
+        // This endpoint does not allow batch requests, so process the symbols one-by-one
         symbols.forEach(symbol -> {
-            LOGGER.error().log("Getting analyst recommendation for {}", symbol);
+            LOGGER.info().log("Getting analyst recommendation for {}", symbol);
 
             String endpointPath = String.format("time-series/CORE_ESTIMATES/%s", symbol);
             String jsonStr = restTemplate.getForObject(
@@ -118,56 +113,40 @@ public class MarketDataServiceImpl implements MarketDataService {
                             + token,
                     String.class);
 
-            // The mapper provides functionality for writing IEX Cloud response into a POJO
-            ObjectMapper mapper = new ObjectMapper();
-            AnalystRecommendation[] analystRecommendation = null;
-            try {
-                analystRecommendation = mapper.readValue(jsonStr, AnalystRecommendation[].class);
-            } catch (JsonProcessingException e) {
-                LOGGER.error().log("JSON processing exception deserializing analyst recommendation for {}", symbol);
-            }
-
-            // IEX Cloud returns an array containing the recommendation for the specified symbol. Extract that
-            // recommendation and either update or create a new recommendation based on its prior existence.
-            try {
-                AnalystRecommendation analystRecommendationToBeSaved =
-                        updateExistingAnalystRecommendationOrGetNewAnalystRecommendation(analystRecommendation[0]);
-
-                analystRecommendations.add(analystRecommendationToBeSaved);
-            } catch (NullPointerException | IndexOutOfBoundsException e) {
-                // Fail gracefully by logging error and allow the program to continue executing
-                LOGGER.error().log("Error. No analyst recommendation found for {}.", symbol);
-
-                AnalystRecommendation failSafe = new AnalystRecommendation();
-                failSafe.setSymbol(symbol);
-                failSafe.setMarketConsensus(0F);
-                failSafe.setMarketConsensusTargetPrice(new BigDecimal("0"));
-                analystRecommendations.add(failSafe);
-            }
+            analystRecommendations.add(processAnalystRecommendationResponse(jsonStr, symbol));
         });
 
         return analystRecommendations;
     }
 
-    // Update the quote if it exists, otherwise return the new quote
-    private AnalystRecommendation updateExistingAnalystRecommendationOrGetNewAnalystRecommendation(
-            AnalystRecommendation analystRecommendation) {
+    // Maps the IEX Cloud response into an AnalystRecommendation object for a specific symbol
+    private AnalystRecommendation processAnalystRecommendationResponse(String jsonStr, String symbol) {
 
-        String symbol = analystRecommendation.getSymbol();
+        AnalystRecommendation[] analystRecommendation;
+        ObjectMapper mapper = new ObjectMapper();          // Maps the IEX Cloud response into a POJO
+        try {
+            analystRecommendation = mapper.readValue(jsonStr, AnalystRecommendation[].class);
+            if (doesAnalystRecommendationExist(analystRecommendation)) {
+                return analystRecommendation[0];
+            }
 
-        AnalystRecommendation existingAnalystRecommendation =
-                analystRecommendationRepository.findAnalystRecommendationBySymbol(symbol);
-
-        if (existingAnalystRecommendation != null) {
-
-            existingAnalystRecommendation.setMarketConsensusTargetPrice(
-                    analystRecommendation.getMarketConsensusTargetPrice());
-
-            existingAnalystRecommendation.setMarketConsensus(analystRecommendation.getMarketConsensus());
-
-            return existingAnalystRecommendation;
+            LOGGER.error().log("Error. No analyst recommendation found for {}.", symbol);
+            return createPlaceholderAnalystRecommendation(symbol);
+        } catch (JsonProcessingException e) {
+            LOGGER.error().log("JSON processing exception deserializing analyst recommendation for {}", symbol);
+            return createPlaceholderAnalystRecommendation(symbol);
         }
+    }
 
-        return analystRecommendation;
+    private boolean doesAnalystRecommendationExist(AnalystRecommendation[] analystRecommendation) {
+        return analystRecommendation != null && analystRecommendation.length != 0;
+    }
+
+    private AnalystRecommendation createPlaceholderAnalystRecommendation(String symbol) {
+        AnalystRecommendation placeHolderAnalystRecommendation = new AnalystRecommendation();
+        placeHolderAnalystRecommendation.setSymbol(symbol);
+        placeHolderAnalystRecommendation.setMarketConsensus(0F);
+        placeHolderAnalystRecommendation.setMarketConsensusTargetPrice(new BigDecimal("0"));
+        return placeHolderAnalystRecommendation;
     }
 }

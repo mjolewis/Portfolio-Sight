@@ -8,10 +8,7 @@ import org.fissore.slf4j.FluentLoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Transactional
@@ -25,6 +22,41 @@ public class AnalystRecommendationService {
                                         MarketDataServiceImpl marketDataService) {
         this.analystRecommendationRepository = analystRecommendationRepository;
         this.marketDataService = marketDataService;
+    }
+
+    /**
+     * Filter Analyst Recommendations by symbol. Existing Analyst Recommendations will be updated otherwise they will
+     * be created. This is used as an optimization to avoid polluting the database with redundant data because the
+     * system doesn't need to track historical Analyst Recommendations. It only cares about the current Analyst
+     * Recommendation.
+     *
+     * @param analystRecommendations A list of all Analyst Recommendation responses from IEX Cloud.
+     * @return A List of Analyst Recommendations that will be updated or created.
+     */
+    public List<AnalystRecommendation> getAnalystRecommendationsToBeUpdatedOrCreated(
+            List<AnalystRecommendation> analystRecommendations) {
+
+        List<AnalystRecommendation> filteredAnalystRecommendations = new ArrayList<>();
+
+        analystRecommendations.forEach(analystRecommendation -> {
+            String symbol = analystRecommendation.getSymbol();
+
+            AnalystRecommendation existingAnalystRecommendation =
+                    analystRecommendationRepository.findAnalystRecommendationBySymbol(symbol);
+
+            if (existingAnalystRecommendation != null) {
+                filteredAnalystRecommendations.add(updateExistingAnalystRecommendation(existingAnalystRecommendation));
+            }
+        });
+
+        return filteredAnalystRecommendations;
+    }
+
+    // Update the Analyst Recommendation if it exists
+    private AnalystRecommendation updateExistingAnalystRecommendation(AnalystRecommendation analystRecommendation) {
+        analystRecommendation.setMarketConsensusTargetPrice(analystRecommendation.getMarketConsensusTargetPrice());
+        analystRecommendation.setMarketConsensus(analystRecommendation.getMarketConsensus());
+        return analystRecommendation;
     }
 
     /**

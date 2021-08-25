@@ -95,6 +95,8 @@ public class PortfolioService {
 
             // Collect analyst recommendations for the symbols being imported and make an association to its quotes
             analystRecommendations = marketDataServiceImpl.doGetAnalystRecommendations(allSymbols);
+            List<AnalystRecommendation> filteredAnalystRecommendations =
+                    analystRecommendationService.getAnalystRecommendationsToBeUpdatedOrCreated(analystRecommendations);
             doCreateAnalystRecommendations(analystRecommendations);
             analystRecommendationService.doLinkQuotes(quotes);
         }
