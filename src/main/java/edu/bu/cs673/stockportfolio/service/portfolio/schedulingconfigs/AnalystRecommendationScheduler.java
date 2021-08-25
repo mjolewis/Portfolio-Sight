@@ -19,7 +19,7 @@ public class AnalystRecommendationScheduler {
 
     /**
      * Configures the schedule for getting updated market quotes from IEX Cloud. The task uses cron scheduling to run
-     * every minute from 9:00 AM to 4:00 PM Eastern time every day-of-week from Monday through Friday.
+     * every Friday at 9:00 AM Eastern time.
      */
     @Scheduled(cron = "0 0 9 * * FRI", zone = "America/New_York")
     public void startSchedule() {
