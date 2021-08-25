@@ -3,14 +3,14 @@ package edu.bu.cs673.stockportfolio.unittests.service.portfolio;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
-import edu.bu.cs673.stockportfolio.domain.account.AccountLineRepository;
-import edu.bu.cs673.stockportfolio.domain.portfolio.Portfolio;
-import edu.bu.cs673.stockportfolio.domain.portfolio.PortfolioRepository;
-import edu.bu.cs673.stockportfolio.domain.user.User;
-import edu.bu.cs673.stockportfolio.service.company.CompanyService;
-import edu.bu.cs673.stockportfolio.service.portfolio.MarketDataServiceImpl;
-import edu.bu.cs673.stockportfolio.service.portfolio.PortfolioNotFoundException;
-import edu.bu.cs673.stockportfolio.service.portfolio.PortfolioService;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.AccountLineRepository;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.Portfolio;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.PortfolioRepository;
+import edu.bu.cs673.stockportfolio.user.model.persistence.User;
+import edu.bu.cs673.stockportfolio.marketdata.service.company.CompanyService;
+import edu.bu.cs673.stockportfolio.marketdata.service.MarketDataServiceImpl;
+import edu.bu.cs673.stockportfolio.portfolio.service.PortfolioNotFoundException;
+import edu.bu.cs673.stockportfolio.portfolio.service.PortfolioService;
 import java.util.*;
 
 import org.junit.jupiter.api.Assertions;

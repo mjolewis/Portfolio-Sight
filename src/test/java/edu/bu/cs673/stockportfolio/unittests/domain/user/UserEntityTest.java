@@ -1,7 +1,7 @@
 package edu.bu.cs673.stockportfolio.unittests.domain.user;
 
-import edu.bu.cs673.stockportfolio.domain.portfolio.Portfolio;
-import edu.bu.cs673.stockportfolio.domain.user.User;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.Portfolio;
+import edu.bu.cs673.stockportfolio.user.model.persistence.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

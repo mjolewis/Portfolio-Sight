@@ -2,12 +2,12 @@ package edu.bu.cs673.stockportfolio.unittests.service.user;
 
 import static org.mockito.Mockito.when;
 
-import edu.bu.cs673.stockportfolio.domain.portfolio.Portfolio;
-import edu.bu.cs673.stockportfolio.domain.user.User;
-import edu.bu.cs673.stockportfolio.domain.user.UserRepository;
-import edu.bu.cs673.stockportfolio.service.authentication.HashService;
-import edu.bu.cs673.stockportfolio.service.user.UserNotFoundException;
-import edu.bu.cs673.stockportfolio.service.user.UserService;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.Portfolio;
+import edu.bu.cs673.stockportfolio.user.model.persistence.User;
+import edu.bu.cs673.stockportfolio.user.model.persistence.UserRepository;
+import edu.bu.cs673.stockportfolio.user.service.HashService;
+import edu.bu.cs673.stockportfolio.user.service.UserNotFoundException;
+import edu.bu.cs673.stockportfolio.user.service.UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
