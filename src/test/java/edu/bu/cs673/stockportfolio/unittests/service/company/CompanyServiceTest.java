@@ -2,10 +2,10 @@ package edu.bu.cs673.stockportfolio.unittests.service.company;
 
 import static org.mockito.Mockito.when;
 
-import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRepository;
-import edu.bu.cs673.stockportfolio.service.company.CompanyService;
+import edu.bu.cs673.stockportfolio.marketdata.model.quote.persistence.Quote;
+import edu.bu.cs673.stockportfolio.marketdata.model.company.persistence.Company;
+import edu.bu.cs673.stockportfolio.marketdata.model.company.persistence.CompanyRepository;
+import edu.bu.cs673.stockportfolio.marketdata.service.company.CompanyService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

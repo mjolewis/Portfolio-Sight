@@ -2,17 +2,17 @@ package edu.bu.cs673.stockportfolio.unittests.service.portfolio;
 
 import static org.mockito.Mockito.when;
 
-import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRepository;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.QuoteRoot;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.StockQuote;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanyRoot;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.CompanySector;
-import edu.bu.cs673.stockportfolio.service.company.CompanyService;
-import edu.bu.cs673.stockportfolio.service.portfolio.MarketDataServiceImpl;
-import edu.bu.cs673.stockportfolio.service.portfolio.QuoteService;
-import edu.bu.cs673.stockportfolio.service.utilities.IexCloudConfig;
+import edu.bu.cs673.stockportfolio.marketdata.model.quote.persistence.Quote;
+import edu.bu.cs673.stockportfolio.marketdata.model.quote.persistence.QuoteRepository;
+import edu.bu.cs673.stockportfolio.marketdata.model.quote.persistence.QuoteRoot;
+import edu.bu.cs673.stockportfolio.marketdata.model.quote.persistence.QuoteContainer;
+import edu.bu.cs673.stockportfolio.marketdata.model.company.persistence.Company;
+import edu.bu.cs673.stockportfolio.marketdata.model.company.persistence.CompanyRoot;
+import edu.bu.cs673.stockportfolio.marketdata.model.company.persistence.CompanyContainer;
+import edu.bu.cs673.stockportfolio.marketdata.service.company.CompanyService;
+import edu.bu.cs673.stockportfolio.marketdata.service.MarketDataServiceImpl;
+import edu.bu.cs673.stockportfolio.marketdata.service.quote.QuoteService;
+import edu.bu.cs673.stockportfolio.marketdata.config.IexCloudConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,19 +86,19 @@ public class MarketDataServiceImplTest {
                         "marketCap",
                 symbolFilter);
 
-        StockQuote stockQuote = new StockQuote(quote);
+        QuoteContainer quoteContainer = new QuoteContainer(quote);
         QuoteRoot quoteRoot = new QuoteRoot();
-        quoteRoot.addStock("Goldman Sachs, Inc.", stockQuote);
+        quoteRoot.addQuoteContainer("Goldman Sachs, Inc.", quoteContainer);
 
         when(restTemplate.getForObject(BASE_URL + VERSION + endpointPath
                 + queryParams + TOKEN + apiKey, QuoteRoot.class)).thenReturn(quoteRoot);
 
         QuoteRoot quoteRootResponse = marketDataService.doGetQuotes(symbols);
 
-        Map<String, StockQuote> stocks = quoteRootResponse.getStocks();
+        Map<String, QuoteContainer> stocks = quoteRootResponse.getQuoteContainer();
 
-        Collection<StockQuote> stockQuotes = stocks.values();
-        stockQuotes.forEach(value -> {
+        Collection<QuoteContainer> quoteContainers = stocks.values();
+        quoteContainers.forEach(value -> {
             Assertions.assertEquals(quote, value.getQuote());
         });
     }
@@ -112,9 +112,9 @@ public class MarketDataServiceImplTest {
         List<Quote> quotes = List.of(quote);
         Company company =
                 new Company("GS", "Financial Services", "Goldman Sachs, Inc.", quotes);
-        CompanySector companySector = new CompanySector(company);
+        CompanyContainer companyContainer = new CompanyContainer(company);
         CompanyRoot companyRoot = new CompanyRoot();
-        companyRoot.addCompanySector("GS", companySector);
+        companyRoot.addCompanyContainer("GS", companyContainer);
 
         when(restTemplate.getForObject(
                 BASE_URL + VERSION + endpointPath + queryParams + TOKEN + apiKey, CompanyRoot.class))
@@ -122,9 +122,9 @@ public class MarketDataServiceImplTest {
 
         CompanyRoot response = marketDataService.doGetCompanies(symbols);
 
-        Map<String, CompanySector> sectors = response.getCompanySectors();
+        Map<String, CompanyContainer> sectors = response.getCompanyContainer();
 
-        Collection<CompanySector> companies = sectors.values();
+        Collection<CompanyContainer> companies = sectors.values();
         companies.forEach(value -> Assertions.assertEquals(company, value.getCompany()));
     }
 }

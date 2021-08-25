@@ -1,8 +1,8 @@
 package edu.bu.cs673.stockportfolio.unittests.domain.account;
 
-import edu.bu.cs673.stockportfolio.domain.account.Account;
-import edu.bu.cs673.stockportfolio.domain.account.AccountLine;
-import edu.bu.cs673.stockportfolio.domain.portfolio.Portfolio;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.Account;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.AccountLine;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.Portfolio;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

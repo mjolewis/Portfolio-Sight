@@ -1,9 +1,9 @@
 package edu.bu.cs673.stockportfolio.unittests.domain.investment;
 
-import edu.bu.cs673.stockportfolio.domain.account.AccountLine;
-import edu.bu.cs673.stockportfolio.domain.investment.analysts.AnalystRecommendation;
-import edu.bu.cs673.stockportfolio.domain.investment.quote.Quote;
-import edu.bu.cs673.stockportfolio.domain.investment.sector.Company;
+import edu.bu.cs673.stockportfolio.portfolio.model.persistence.AccountLine;
+import edu.bu.cs673.stockportfolio.marketdata.model.consensus.persistence.AnalystRecommendation;
+import edu.bu.cs673.stockportfolio.marketdata.model.quote.persistence.Quote;
+import edu.bu.cs673.stockportfolio.marketdata.model.company.persistence.Company;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
